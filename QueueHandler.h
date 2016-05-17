@@ -15,7 +15,7 @@ void DestroyGQueues(GQueues *gq) ;
 /* 分配PCB内存块 */
 int allocPcb(GQueues *gq, int pid, int tServing, int tArriving);
 /* 回收PCB块 */
-void collectPcb(GQueues *gq);
+void collectPcb(PcbQueue *node);
 
 /* RR算法 */
 void invokeRR(PPQueue *ready, int flag);

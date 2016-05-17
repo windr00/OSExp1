@@ -10,7 +10,7 @@ int main(int argc, char ** argv) {
     int tServing, tArriving;
     int nSchedule = 0;
     int RRflag = 0;
-
+    int pid;
     if (argc == 1) {
         nSchedule = atoi(argv[1]);
     }
