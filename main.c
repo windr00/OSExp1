@@ -4,20 +4,27 @@
 
 #define RR 0
 #define SPF 1
+
 int main(int argc, char ** argv) {
-    static GQueues * gq;
-    int i;
-    int tServing, tArriving;
     int nSchedule = 0;
     int RRflag = 0;
     int pid;
-    if (argc == 1) {
-        nSchedule = atoi(argv[1]);
-    }
+//    if (argc == 1) {
+//        nSchedule = atoi(argv[1]);
+//    }
+//    else {
+//        printf("too few arguments\n");
+//        return -1;
+//    }
+    GQueues *gq = (GQueues *) malloc(sizeof(GQueues));
     InitGQueues(gq);
 
 /* 根据录入进程数据，分配PCB */
-    allocPcb(gq, i, tServing, tArriving);
+    allocPcb(gq, 0, 3, 0);
+    allocPcb(gq, 1, 6, 2);
+    allocPcb(gq, 2, 4, 4);
+    allocPcb(gq, 3, 5, 6);
+    allocPcb(gq, 4, 2, 8);
 
 /* 输入进程调度方式　*/
 
@@ -37,7 +44,7 @@ int main(int argc, char ** argv) {
 
         /* 运行 */
         pid = running(gq->qReady.head);
-
+        printf("now running %d\n", pid);
         /* 就绪队列的队头是否运行完毕？*/
         RRflag = finishReadyHead(gq);
 
@@ -48,4 +55,5 @@ int main(int argc, char ** argv) {
 
     /* 结束实验，清理内存 */
     DestroyGQueues(gq);
+    system("PAUSE");
 }

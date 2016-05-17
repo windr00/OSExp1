@@ -3,17 +3,17 @@
 //
 
 #include <stdlib.h>
+#include <stdio.h>
 #include "QueueHandler.h"
 
 #define RUNNING 0
 #define FINISHED 1
 /* 初始化PCB块和空余队列 */
 int InitGQueues(GQueues *gq) {
-    gq = (GQueues *)malloc(sizeof(GQueues));
     gq->qFree.head = NULL;
-    gq->qFree.tail = NULL;
+    gq->qFree.tail = gq->qFree.head;
     gq->qReady.head = NULL;
-    gq->qReady.tail = NULL;
+    gq->qReady.tail = gq->qReady.head;
 
 }
 
@@ -33,8 +33,14 @@ int allocPcb(GQueues *gq, int pid, int tServing, int tArriving) {
     PcbQueue * node = malloc(sizeof(PcbQueue));
     node->next = NULL;
     node->block = pcb;
+    if (gq->qFree.head == NULL) {
+        gq->qFree.head = node;
+        gq->qFree.tail = gq->qFree.head;
+        return 0;
+    }
     gq->qFree.tail->next = node;
     gq->qFree.tail = node;
+    return 0;
 }
 /* 回收PCB块 */
 void collectPcb(PcbQueue *node) {
@@ -51,9 +57,15 @@ void invokeRR(PPQueue *ready, int flag) {
     }
     if (flag) {
         ready->head = ready->head->next;
+        printf("task %d finished, next task %d scheduled\n", node->block->pid, ready->head->block->pid);
         collectPcb(node);
         return;
     }
+    if (ready->head->next == NULL) {
+        printf("task %d does not finish and next task %d scheduled\n", node->block->pid, node->block->pid);
+        return;
+    }
+    printf("task %d does not finish and next task %d scheduled\n", node->block->pid, ready->head->next->block->pid);
     ready->head = ready->head->next;
     ready->tail->next = node;
     ready->tail = node;
@@ -95,20 +107,28 @@ int running(PcbQueue *head) {
 
 /* 队头进程是否结束，1为运行完毕 */
 int finishReadyHead(GQueues *gq) {
-    static int time = 0;
+    static int time = -1;
     time++;
+    printf("now time: %d\n", time);
     if (gq->qFree.head->block->tArriving == time) {
         PcbQueue *node = gq->qFree.head;
-        node->next = NULL;
         gq->qFree.head = gq->qFree.head->next;
-        gq->qReady.tail->next = node;
-        gq->qReady.tail = node;
+        node->next = NULL;
+        if (gq->qReady.head == NULL) {
+            gq->qReady.head = node;
+            gq->qReady.tail = gq->qReady.head;
+            return 0;
+        }
+        else {
+            gq->qReady.tail->next = node;
+            gq->qReady.tail = node;
+        }
     }
     for (PcbQueue *temp = gq->qFree.head; temp->next != NULL; temp = temp->next) {
         if (temp->next->block->tArriving == time) {
             PcbQueue *node = temp;
-            node->next = NULL;
             temp->next = temp->next->next;
+            node->next = NULL;
             gq->qReady.tail->next = node;
             gq->qReady.tail = node;
         }
