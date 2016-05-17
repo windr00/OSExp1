@@ -6,7 +6,7 @@
 #define SPF 1
 
 int main(int argc, char ** argv) {
-    int nSchedule = 0;
+    int nSchedule = SPF;
     int RRflag = 0;
     int pid;
 //    if (argc == 1) {
@@ -42,18 +42,17 @@ int main(int argc, char ** argv) {
                 break;
         }
 
-        /* 运行 */
-        pid = running(gq->qReady.head);
-        printf("now running %d\n", pid);
         /* 就绪队列的队头是否运行完毕？*/
         RRflag = finishReadyHead(gq);
-
         /* 是否全部运行完毕？*/
         if (gq->qReady.head == NULL)
             break;
+
+        /* 运行 */
+        pid = running(gq->qReady.head);
+        printf("now running %d\n", pid);
     } while (1);
 
     /* 结束实验，清理内存 */
     DestroyGQueues(gq);
-    system("PAUSE");
 }

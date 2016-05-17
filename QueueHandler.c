@@ -57,7 +57,12 @@ void invokeRR(PPQueue *ready, int flag) {
     }
     if (flag) {
         ready->head = ready->head->next;
-        printf("task %d finished, next task %d scheduled\n", node->block->pid, ready->head->block->pid);
+        if (node->next != NULL) {
+            printf("task %d finished, next task %d scheduled\n", node->block->pid, ready->head->block->pid);
+        }
+        else {
+            printf("task %d finished, no next task comming\n", node->block->pid);
+        }
         collectPcb(node);
         return;
     }
@@ -67,18 +72,25 @@ void invokeRR(PPQueue *ready, int flag) {
     }
     printf("task %d does not finish and next task %d scheduled\n", node->block->pid, ready->head->next->block->pid);
     ready->head = ready->head->next;
+    node->next = NULL;
     ready->tail->next = node;
     ready->tail = node;
 }
 /* SPF算法 */
 void invokeSpf(PPQueue *ready) {
     PcbQueue *node = ready->head;
+    if (node == NULL) {
+        return;
+    }
     if (node->block->state == RUNNING) {
         return;
     }
     ready->head = ready->head->next;
-    collectPcb(node);
-    int mini = ready->head->block->pid;
+    if (ready->head == NULL) {
+        printf("task %d finished, no next task comming\n", node->block->pid);
+        return;
+    }
+    int mini = ready->head->block->tOverall;
     PcbQueue *next = ready->head;
     for (PcbQueue *temp = ready->head; temp->next != NULL; temp = temp->next) {
         if (temp->next->block->tOverall < mini) {
@@ -90,11 +102,14 @@ void invokeSpf(PPQueue *ready) {
         for (PcbQueue *temp = ready->head; temp->next != NULL; temp = temp->next) {
             if (temp->next->block->pid == next->block->pid) {
                 temp->next = temp->next->next;
-                next->next = ready->head->next;
+                next->next = ready->head;
                 ready->head = next;
+                break;
             }
         }
     }
+    printf("task %d finished, next task %d scheduled\n", node->block->pid, ready->head->block->pid);
+    collectPcb(node);
 }
 
 /* 返回执行进程的pid, -1表示无就绪进程 */
@@ -110,7 +125,7 @@ int finishReadyHead(GQueues *gq) {
     static int time = -1;
     time++;
     printf("now time: %d\n", time);
-    if (gq->qFree.head->block->tArriving == time) {
+    if (gq->qFree.head != NULL && gq->qFree.head->block->tArriving == time) {
         PcbQueue *node = gq->qFree.head;
         gq->qFree.head = gq->qFree.head->next;
         node->next = NULL;
@@ -124,13 +139,15 @@ int finishReadyHead(GQueues *gq) {
             gq->qReady.tail = node;
         }
     }
-    for (PcbQueue *temp = gq->qFree.head; temp->next != NULL; temp = temp->next) {
-        if (temp->next->block->tArriving == time) {
-            PcbQueue *node = temp;
-            temp->next = temp->next->next;
-            node->next = NULL;
-            gq->qReady.tail->next = node;
-            gq->qReady.tail = node;
+    if (gq->qFree.head != NULL) {
+        for (PcbQueue *temp = gq->qFree.head; temp->next != NULL; temp = temp->next) {
+            if (temp->next->block->tArriving == time) {
+                PcbQueue *node = temp;
+                temp->next = temp->next->next;
+                node->next = NULL;
+                gq->qReady.tail->next = node;
+                gq->qReady.tail = node;
+            }
         }
     }
     PcbQueue *node = gq->qReady.head;
