@@ -1,6 +1,7 @@
 #include "QueueHandler.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <memory.h>
 
 #define RR 0
 #define SPF 1
@@ -9,13 +10,23 @@ int main(int argc, char ** argv) {
     int nSchedule = SPF;
     int RRflag = 0;
     int pid;
-//    if (argc == 1) {
-//        nSchedule = atoi(argv[1]);
-//    }
-//    else {
-//        printf("too few arguments\n");
-//        return -1;
-//    }
+    printf("this is done by 冉惟之, std. id : 2013060105023\n");
+    if (argc == 2) {
+        if (!strcmp(argv[1], "RR")) {
+            nSchedule = RR;
+        }
+        else if (!strcmp(argv[1], "SPF")) {
+            nSchedule = SPF;
+        }
+        else {
+            printf("invalid argument : %s\n", argv[1]);
+            return -2;
+        }
+    }
+    else {
+        printf("too few arguments\n");
+        return -1;
+    }
     GQueues *gq = (GQueues *) malloc(sizeof(GQueues));
     InitGQueues(gq);
 
